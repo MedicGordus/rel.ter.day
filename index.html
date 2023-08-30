@@ -1,94 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>x Relationship Picture Builder</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #202020;
-            color: #FFFFFF;
-        }
-
-        #controlPanel {
-            width: 400px;
-            margin: 20px auto;
-            background-color: #2A2A2A;
-            padding: 20px;
-            border-radius: 10px;
-        }
-
-        label, input, select, button {
-            margin-bottom: 10px;
-            display: block;
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #555555;
-            background-color: #333333;
-            color: #FFFFFF;
-        }
-
-        button {
-            cursor: pointer;
-            background-color: #555555;
-            border: none;
-        }
-
-        button:hover {
-            background-color: #666666;
-        }
-    </style>
+    <title>Twitter Profile Graph</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-    <div id="controlPanel">
-        <h2>Central Account</h2>
-        <input type="text" id="centralAccount" placeholder="@centralAccount">
-        <div id="additionalAccounts"></div>
-        <button onclick="addNewAccount('additionalAccounts')">Add New Account</button>
-        <button onclick="generate()">Generate Image</button>
+
+<body class="dark-theme">
+
+    <div class="main-container">
+        <h1>Twitter Profile Graph Builder</h1>
+        <div class="account-container" id="mainAccount">
+            <button class="paste-image-btn">Paste Image</button>
+            <input type="file" class="profile-image-upload">
+            <select class="shape-selector">
+                <option value="circle">Circle</option>
+                <option value="hex">Hex</option>
+                <option value="square">Square</option>
+            </select>
+            <button class="add-account-btn">Add Account</button>
+        </div>
     </div>
-    <canvas id="canvas" width="4000" height="2000"></canvas>
-    <script>
-        let accountCount = 0;
 
-        function addNewAccount(parentId) {
-            const accountDiv = document.createElement("div");
-            accountDiv.setAttribute("id", "accountDiv" + accountCount);
-            accountDiv.style.marginLeft = "20px";  // Indentation to denote nested accounts
-
-            accountDiv.innerHTML = `
-                <div>
-                    <label for="account${accountCount}">Account:</label>
-                    <input type="text" id="account${accountCount}" placeholder="@account">
-                </div>
-                <div>
-                    <label for="accountSize${accountCount}">Size:</label>
-                    <input type="range" min="1" max="200" value="100" id="accountSize${accountCount}">
-                </div>
-                <div>
-                    <select id="shape${accountCount}">
-                        <option value="circle">Circle</option>
-                        <option value="hex">Hex</option>
-                        <option value="square">Square</option>
-                    </select>
-                </div>
-                <div id="subAccounts${accountCount}"></div>
-                <button onclick="addNewAccount('subAccounts${accountCount}')">Add Sub-Account</button>
-            `;
-            document.getElementById(parentId).appendChild(accountDiv);
-            accountCount++;
-        }
-
-        function generate() {
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            // Logic to draw on canvas using the data from user input goes here.
-        }
-
-        // Initialize with 1 additional account by default
-        addNewAccount('additionalAccounts');
-    </script>
+    <script src="scripts.js"></script>
 </body>
+
 </html>
