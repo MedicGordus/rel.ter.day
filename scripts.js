@@ -12,12 +12,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 for (const clipboardItem of clipboardItems) {
                     for (const type of clipboardItem.types) {
                         if (type === "image/png" || type === "image/jpeg") {
+                            /*
                             clipboardItem.getType(type).then(blob => {
                                 const img = new Image();
                                 img.onload = function() {
                                     loadImagePreviewAndUpdateBackground(img, event.target.parentNode, event.target.nextSibling);
                                 };
                                 img.src = URL.createObjectURL(blob);
+                            });
+
+                            return;
+                            */
+                            const clickedButtonParentNode = event.target.parentNode;  
+                            clipboardItem.getType(type).then(blob => {
+                                const reader = new FileReader();
+                                reader.onload = function(event) {
+                                    const img = new Image();
+                                    img.src = event.target.result;  // This is the base64 encoded image data
+                                    img.onload = function() {
+                                        loadImagePreviewAndUpdateBackground(img, clickedButtonParentNode);
+                                    };
+                                };
+                                reader.readAsDataURL(blob);  // Convert blob to base64 encoded string
                             });
                             return;
                         }
@@ -48,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function loadImagePreviewAndUpdateBackground(img, parentNode, nextSibling)
+    function loadImagePreviewAndUpdateBackground(img, parentNode)
     {
         const container = parentNode;
         container.style.backgroundImage = `url(${img.src})`;
@@ -56,8 +72,6 @@ document.addEventListener('DOMContentLoaded', function() {
         container.style.backgroundColor = 'rgba(68, 68, 68, 1)';
 
         // Get the preview element
-        console.log('checking for name = '+parentNode.id);
-        console.log('p = '+parentNode.id + 'Preview');
         const previewElem = document.getElementById(parentNode.id + 'Preview');
     
         // Check if there's an existing image inside the preview element and replace it, otherwise append the new image
@@ -136,7 +150,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // select the last add account button (which is the one in our div)
         var nodes = parentElement.querySelectorAll('.add-account-btn');
-        console.log('found '+nodes.length+' buttons');
 
         // add new right above the button
         parentElement.insertBefore(newAccountDiv, nodes[nodes.length -1]);
@@ -150,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 reader.onloadend = function() {
                     const img = new Image();
                     img.onload = function() {
-                        loadImagePreviewAndUpdateBackground(img, event.target.parentNode, event.target.nextSibling);
+                        loadImagePreviewAndUpdateBackground(img, event.target.parentNode);
                     };
                     img.src = reader.result;
                 }
@@ -158,63 +171,67 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-});
 
-function saveConfiguration() {
+    document.querySelector('#loadConfigInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
 
-    let existingA = document.getElementById('downloadA');
+        reader.onload = function(event) {
+            
+            const mainAccount = document.getElementById('mainAccount');
+            restoreAccount(
+                JSON.parse(event.target.result),
+                mainAccount
+            );
+        }
 
-    function collectAccountData(container) {
-        const config = {};
+        reader.readAsText(file);
+    });
 
-        const imagePreviewElem = container.querySelector('.account-image-preview img');
-        config.image = imagePreviewElem ? imagePreviewElem.src : container.style.backgroundImage.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
-        
-        config.shape = container.querySelector('.shape-selector').value;
-        config.scale = container.querySelector('.profile-scale').value;
+    function restoreAccount(accountConfig, accountContainer) {
 
-        // Recursive part: check for nested account containers and collect their data too
-        const nestedAccounts = Array.from(container.querySelectorAll(':scope > .account-container'));
-        config.accounts = nestedAccounts.map(collectAccountData);
+        // Set the image for the account
+        const imageElem = new Image();
+        imageElem.onload = function() {
+            loadImagePreviewAndUpdateBackground(imageElem, accountContainer);
+        };
+        imageElem.src = accountConfig.imageData;
 
-        return config;
+        // Set the shape selector value
+        const shapeSelector = accountContainer.querySelector('.shape-selector');
+        if (shapeSelector) {
+            shapeSelector.value = accountConfig.shape;
+        }
+
+        // Set the scale values
+        const profileScale = accountContainer.querySelector('.profile-scale');
+        const profileScaleNumeric = accountContainer.querySelector('.profile-scale-numeric');
+        if (profileScale && profileScaleNumeric) {
+            profileScale.value = accountConfig.scale;
+            profileScaleNumeric.value = accountConfig.scale;
+        }
+
+        // If there are nested accounts, restore them recursively
+        if (accountConfig.accounts) {
+            Object.values(accountConfig.accounts).forEach(subAccountConfig => {
+                restoreNewAccount(subAccountConfig, accountContainer);
+            });
+        }
     }
+
+    function restoreNewAccount(accountConfig, parentElement) {
+        // "Click" the 'Add Account' button to create a new account entry
+        const addAccountButton = parentElement.querySelector('.add-account-btn');
+        if (addAccountButton) {
+            addAccountButton.click();
+        }
+
+        // Get the newly added account container
+        const newAccountContainer = addAccountButton.previousSibling;
+        restoreAccount(accountConfig, newAccountContainer);
+    }
+});
     
-    const rootAccountConfig = collectAccountData(document.getElementById('mainAccount'));
-
-    const blob = new Blob([JSON.stringify(rootAccountConfig, null, 2)], { type: 'application/json' });
-
-    const a = document.createElement('a');
-    a.id = "downloadA";
-    a.innerText = "config.json";
-    a.href = URL.createObjectURL(blob);
-    a.download = 'config.json';
-
-    if(existingA)
-    {
-        existingA.replaceWith(a);
-    }
-    else
-    {
-        document.getElementById('backup-container').insertBefore(a, document.getElementById('saveConfigurationBtn'));
-    }
-}
-
-document.querySelector('#loadConfigInput').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-
-    reader.onload = function(event) {
-        const config = JSON.parse(event.target.result);
-
-        // Restore the configuration using the parsed data.
-        // This is just a dummy example.
-        // Restore images, shapes, scales, etc. from the config object.
-    }
-
-    reader.readAsText(file);
-});
-
 function generateImage() {
     let canvas = document.getElementById('outputCanvas');
     if(canvas)
@@ -250,5 +267,45 @@ function generateImage() {
     else
     {
         document.getElementById('generateContainer').insertBefore(a, document.getElementById('generateButton'));
+    }
+}
+
+function saveConfiguration() {
+
+    let existingA = document.getElementById('downloadConfigA');
+
+    function collectAccountData(container) {
+        const config = {};
+
+        const imagePreviewElem = container.querySelector('.account-image-preview img');
+        config.imageData = imagePreviewElem ? imagePreviewElem.src : container.style.backgroundImage.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
+        
+        config.shape = container.querySelector('.shape-selector').value;
+        config.scale = container.querySelector('.profile-scale').value;
+
+        // Recursive part: check for nested account containers and collect their data too
+        const nestedAccounts = Array.from(container.querySelectorAll(':scope > .account-container'));
+        config.accounts = nestedAccounts.map(collectAccountData);
+
+        return config;
+    }
+    
+    const rootAccountConfig = collectAccountData(document.getElementById('mainAccount'));
+
+    const blob = new Blob([JSON.stringify(rootAccountConfig, null, 2)], { type: 'application/json' });
+
+    const a = document.createElement('a');
+    a.id = "downloadConfigA";
+    a.innerText = "config.json";
+    a.href = URL.createObjectURL(blob);
+    a.download = 'config.json';
+
+    if(existingA)
+    {
+        existingA.replaceWith(a);
+    }
+    else
+    {
+        document.getElementById('backupContainer').insertBefore(a, document.getElementById('saveConfigurationBtn'));
     }
 }
