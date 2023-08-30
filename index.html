@@ -13,15 +13,29 @@
     <div class="main-container">
         <h1>Twitter Profile Graph Builder</h1>
         <div class="account-container" id="mainAccount">
+            <div id="mainAccountPreview" class="account-image-preview"></div>
             <button class="paste-image-btn">Paste Image</button>
             <input type="file" class="profile-image-upload">
-            <select class="shape-selector">
-                <option value="circle">Circle</option>
-                <option value="hex">Hex</option>
-                <option value="square">Square</option>
-            </select>
+            <label> Shape:
+                <select class="shape-selector">
+                    <option value="circle">Circle</option>
+                    <option value="hex">Hex</option>
+                    <option value="square">Square</option>
+                </select>
+            </label>
+            <label>Scale:</label>
+            <input class="profile-scale" type="range" min="0.1" max="2" step="0.01" value="1" />
+            <input class="profile-scale-numeric" type="number" min="0.1" max="2" step="0.01" value="1" />
+            <br />
             <button class="add-account-btn">Add Account</button>
         </div>
+    </div><br />
+    <div id="generateContainer" class="generate-container">
+        <button id="generateButton" class="btn" onclick="generateImage()">Generate Image</button><br />
+    </div><br />
+    <div class="backup-container" id="backup-container">
+        <button class="btn" id="saveConfigurationBtn" onclick="saveConfiguration()">Generate Backup Link</button><br />
+        <label>Load backup: <input id="loadConfigInput" type="file"></label><br />
     </div>
 
     <script src="scripts.js"></script>
