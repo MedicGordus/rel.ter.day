@@ -231,12 +231,13 @@ document.addEventListener('DOMContentLoaded', function() {
         restoreAccount(accountConfig, newAccountContainer);
     }
 });
-    
+
 function generateImage() {
     let canvas = document.getElementById('outputCanvas');
     if(canvas)
     {
-        canvas = document.getElementById('outputCanvas').replaceWith(document.createElement('canvas'))
+        canvas = document.createElement('canvas');
+        document.getElementById('outputCanvas').replaceWith(canvas);
     }
     else
     {
@@ -252,6 +253,10 @@ function generateImage() {
 
     
     let existingA = document.getElementById('downloadImageA');
+    if(existingA)
+    {
+        existingA.remove();
+    }
     const imgURL = canvas.toDataURL('image/png');
 
     const a = document.createElement('a');
@@ -259,36 +264,145 @@ function generateImage() {
     a.innerText = "profileImage.png";
     a.href = imgURL;
     a.download = 'profileImage.png';
+    document.getElementById('generateContainer').insertBefore(a, document.getElementById('generateButton'));
 
-    if(existingA)
-    {
-        existingA.replaceWith(a);
+    // Constants
+    /*
+    const CANVAS_WIDTH = 3840;  // 4k width
+    const CANVAS_HEIGHT = 2160; // 4k height
+    const BASE_SIZE = 500;      // Base size for the main profile image
+    */
+    const CANVAS_WIDTH = 1920;  // 1080p width
+    const CANVAS_HEIGHT = 1080; // 1080p height
+    const BASE_SIZE = 250;      // Base size for the main profile image
+
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+
+    // helper for the twitter NFT shape
+    function transformPath(pathStr, scale, offsetX, offsetY) {
+        const commands = pathStr.split(/(?=[MLC])/);
+    
+        const transformedCommands = commands.map(command => {
+            const type = command.charAt(0);
+            const values = command.slice(1).trim().split(/\s+|,/).map(Number);
+    
+            switch(type) {
+                case 'M':
+                case 'L':
+                    const [x, y] = values;
+                    const newX = x * scale + offsetX;
+                    const newY = y * scale + offsetY;
+                    return `${type} ${newX} ${newY}`;
+    
+                case 'C':
+                    const [x1, y1, x2, y2, x3, y3] = values;
+                    const newX1 = x1 * scale + offsetX;
+                    const newY1 = y1 * scale + offsetY;
+                    const newX2 = x2 * scale + offsetX;
+                    const newY2 = y2 * scale + offsetY;
+                    const newX3 = x3 * scale + offsetX;
+                    const newY3 = y3 * scale + offsetY;
+                    return `${type} ${newX1} ${newY1}, ${newX2} ${newY2}, ${newX3} ${newY3}`;
+    
+                default:
+                    // For other commands, just return them unmodified
+                    // (this example only handles M, L, and C for now)
+                    return command;
+            }
+        });
+    
+        return transformedCommands.join(' ');
     }
-    else
-    {
-        document.getElementById('generateContainer').insertBefore(a, document.getElementById('generateButton'));
+
+    // Helper function to crop images based on shape
+    function drawCroppedImage(img, x, y, size, shape, scale) {
+        const adjustedSize = size * scale;
+
+        switch (shape) {
+            case 'circle':
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(x, y, adjustedSize / 2, 0, 2 * Math.PI, false);
+                ctx.clip();
+                ctx.drawImage(img, x - adjustedSize / 2, y - adjustedSize / 2, adjustedSize, adjustedSize);
+                ctx.restore();
+                break;
+            case 'square':
+                ctx.drawImage(img, x - adjustedSize / 2, y - adjustedSize / 2, adjustedSize, adjustedSize);
+                break;
+            case 'hex':
+                const clipPathString = 'M193.248 69.51C185.95 54.1634 177.44 39.4234 167.798 25.43L164.688 20.96C160.859 15.4049 155.841 10.7724 149.998 7.3994C144.155 4.02636 137.633 1.99743 130.908 1.46004L125.448 1.02004C108.508 -0.340012 91.4873 -0.340012 74.5479 1.02004L69.0879 1.46004C62.3625 1.99743 55.8413 4.02636 49.9981 7.3994C44.155 10.7724 39.1367 15.4049 35.3079 20.96L32.1979 25.47C22.5561 39.4634 14.0458 54.2034 6.74789 69.55L4.39789 74.49C1.50233 80.5829 0 87.2441 0 93.99C0 100.736 1.50233 107.397 4.39789 113.49L6.74789 118.43C14.0458 133.777 22.5561 148.517 32.1979 162.51L35.3079 167.02C39.1367 172.575 44.155 177.208 49.9981 180.581C55.8413 183.954 62.3625 185.983 69.0879 186.52L74.5479 186.96C91.4873 188.32 108.508 188.32 125.448 186.96L130.908 186.52C137.638 185.976 144.163 183.938 150.006 180.554C155.85 177.17 160.865 172.526 164.688 166.96L167.798 162.45C177.44 148.457 185.95 133.717 193.248 118.37L195.598 113.43C198.493 107.337 199.996 100.676 199.996 93.93C199.996 87.1841 198.493 80.5229 195.598 74.43L193.248 69.51Z';                    const scaledPath = new Path2D(transformPath(clipPathString,adjustedSize / 200, x - adjustedSize / 2, y - adjustedSize / 2));
+                ctx.save();
+                ctx.clip(scaledPath);
+                ctx.drawImage(img, x - adjustedSize / 2, y - adjustedSize / 2, adjustedSize, adjustedSize);
+                ctx.restore();
+
+                break;
+
+            // Additional cases for other shapes can be added
+            default:
+                ctx.drawImage(img, x - adjustedSize / 2, y - adjustedSize / 2, adjustedSize, adjustedSize);
+        }
     }
+
+    // Recursive function to draw the profile pictures and connections
+    function drawAccount(accountConfig, x, y, depth) {
+        const imageElem = new Image();
+        imageElem.onload = function() {
+            const currentSize = BASE_SIZE / (depth + 1);
+            drawCroppedImage(imageElem, x, y, currentSize, accountConfig.shape, accountConfig.scale);
+
+            if (accountConfig.accounts) {
+                const numSubAccounts = Object.keys(accountConfig.accounts).length;
+                const angleBetween = 360 / numSubAccounts;
+
+                let currentAngle = 0;
+
+                for (const subAccountConfig of Object.values(accountConfig.accounts)) {
+                    const childX = x + (currentSize * 1.5) * Math.cos(currentAngle * (Math.PI / 180));
+                    const childY = y + (currentSize * 1.5) * Math.sin(currentAngle * (Math.PI / 180));
+
+                    // Draw a line connection
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(childX, childY);
+                    ctx.stroke();
+
+                    // Draw the sub-account
+                    drawAccount(subAccountConfig, childX, childY, depth + 1);
+
+                    currentAngle += angleBetween;
+                }
+            }
+        };
+        imageElem.src = accountConfig.imageData;
+    }
+
+    // Start with the main account centered
+    const mainAccountConfig = collectAccountData(document.getElementById('mainAccount'));
+    drawAccount(mainAccountConfig, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 0);
+}
+
+function collectAccountData(container) {
+    const config = {};
+
+    const imagePreviewElem = container.querySelector('.account-image-preview img');
+    config.imageData = imagePreviewElem ? imagePreviewElem.src : container.style.backgroundImage.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
+    
+    config.shape = container.querySelector('.shape-selector').value;
+    config.scale = container.querySelector('.profile-scale').value;
+
+    // Recursive part: check for nested account containers and collect their data too
+    const nestedAccounts = Array.from(container.querySelectorAll(':scope > .account-container'));
+    config.accounts = nestedAccounts.map(collectAccountData);
+
+    return config;
 }
 
 function saveConfiguration() {
 
     let existingA = document.getElementById('downloadConfigA');
-
-    function collectAccountData(container) {
-        const config = {};
-
-        const imagePreviewElem = container.querySelector('.account-image-preview img');
-        config.imageData = imagePreviewElem ? imagePreviewElem.src : container.style.backgroundImage.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
-        
-        config.shape = container.querySelector('.shape-selector').value;
-        config.scale = container.querySelector('.profile-scale').value;
-
-        // Recursive part: check for nested account containers and collect their data too
-        const nestedAccounts = Array.from(container.querySelectorAll(':scope > .account-container'));
-        config.accounts = nestedAccounts.map(collectAccountData);
-
-        return config;
-    }
     
     const rootAccountConfig = collectAccountData(document.getElementById('mainAccount'));
 
