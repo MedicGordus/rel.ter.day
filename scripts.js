@@ -12,17 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 for (const clipboardItem of clipboardItems) {
                     for (const type of clipboardItem.types) {
                         if (type === "image/png" || type === "image/jpeg") {
-                            /*
-                            clipboardItem.getType(type).then(blob => {
-                                const img = new Image();
-                                img.onload = function() {
-                                    loadImagePreviewAndUpdateBackground(img, event.target.parentNode, event.target.nextSibling);
-                                };
-                                img.src = URL.createObjectURL(blob);
-                            });
-
-                            return;
-                            */
                             const clickedButtonParentNode = event.target.parentNode;  
                             clipboardItem.getType(type).then(blob => {
                                 const reader = new FileReader();
@@ -230,6 +219,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const newAccountContainer = addAccountButton.previousSibling;
         restoreAccount(accountConfig, newAccountContainer);
     }
+    const CANVAS_WIDTH = 3840;  // 4k width
+    const CANVAS_HEIGHT = 2160; // 4k height
+    const BASE_SIZE = 250;      // Base size for the main profile image
+
+    document.getElementById('canvasWidth').value = CANVAS_WIDTH;
+    document.getElementById('canvasHeight').value = CANVAS_HEIGHT;
+    document.getElementById('profileSize').value = BASE_SIZE;
 });
 
 function generateImage() {
@@ -266,18 +262,8 @@ function generateImage() {
     a.download = 'profileImage.png';
     document.getElementById('generateContainer').insertBefore(a, document.getElementById('generateButton'));
 
-    // Constants
-    /*
-    const CANVAS_WIDTH = 3840;  // 4k width
-    const CANVAS_HEIGHT = 2160; // 4k height
-    const BASE_SIZE = 500;      // Base size for the main profile image
-    */
-    const CANVAS_WIDTH = 1920;  // 1080p width
-    const CANVAS_HEIGHT = 1080; // 1080p height
-    const BASE_SIZE = 250;      // Base size for the main profile image
-
-    canvas.width = CANVAS_WIDTH;
-    canvas.height = CANVAS_HEIGHT;
+    canvas.width = parseInt(document.getElementById('canvasWidth').value);
+    canvas.height = parseInt(document.getElementById('canvasHeight').value);
 
     // helper for the twitter NFT shape
     function transformPath(pathStr, scale, offsetX, offsetY) {
@@ -350,7 +336,8 @@ function generateImage() {
     function drawAccount(accountConfig, x, y, depth) {
         const imageElem = new Image();
         imageElem.onload = function() {
-            const currentSize = BASE_SIZE / (depth + 1);
+            const baseProfileSize = parseInt(document.getElementById('profileSize').value);
+            const currentSize = baseProfileSize / (depth + 1);
             drawCroppedImage(imageElem, x, y, currentSize, accountConfig.shape, accountConfig.scale);
 
             if (accountConfig.accounts) {
@@ -381,7 +368,12 @@ function generateImage() {
 
     // Start with the main account centered
     const mainAccountConfig = collectAccountData(document.getElementById('mainAccount'));
-    drawAccount(mainAccountConfig, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 0);
+    drawAccount(
+        mainAccountConfig,
+        parseInt(document.getElementById('canvasWidth').value) / 2,
+        parseInt(document.getElementById('canvasHeight').value) / 2,
+        0
+    );
 }
 
 function collectAccountData(container) {

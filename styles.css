@@ -4,6 +4,10 @@ body.dark-theme {
     font-family: Arial, sans-serif;
 }
 
+h1 {
+    text-align:center;
+}
+
 .main-container, .backup-container, .generate-container {
     max-width: 800px;
     margin: 0 auto;

@@ -4,18 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Twitter Profile Graph</title>
+    <title>𝕏 Profile Graph</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body class="dark-theme">
 
+    <h1>𝕏 Profile Graph Builder</h1>
     <div class="main-container">
-        <h1>Twitter Profile Graph Builder</h1>
+        <h2>Profile Configuration</h2>
         <div class="account-container" id="mainAccount">
             <div id="mainAccountPreview" class="account-image-preview"></div>
             <button class="paste-image-btn">Paste Image</button>
             <input type="file" class="profile-image-upload">
+            <label>Handle:<input type="text" class="profile-handle" placeholder="(optional) @handle" /></label>
             <label> Shape:
                 <select class="shape-selector">
                     <option value="circle">Circle</option>
@@ -23,19 +25,24 @@
                     <option value="square">Square</option>
                 </select>
             </label>
-            <label>Scale:</label>
-            <input class="profile-scale" type="range" min="0.1" max="2" step="0.01" value="1" />
-            <input class="profile-scale-numeric" type="number" min="0.1" max="2" step="0.01" value="1" />
+            <h3>Adjustments</h3>
+            <label>Scale:</label><input class="profile-scale" type="range" min="0.1" max="2" step="0.01" value="1" /><input class="profile-scale-numeric" type="number" min="0.1" max="2" step="0.01" value="1" /><br />
+            <label>X position:</label><input class="profile-x-numeric" type="number" value="0" /><br />
+            <label>Y position:</label><input class="profile-y-numeric" type="number" value="0" />
             <br />
             <button class="add-account-btn">Add Account</button>
         </div>
     </div><br />
-    <div id="generateContainer" class="generate-container">
-        <button id="generateButton" class="btn" onclick="generateImage()">Generate Image</button><br />
-    </div><br />
     <div id="backupContainer" class="backup-container">
+        <h2>General Configuration</h2>
+
+        <label>Width: <input id="canvasWidth" type="number" /></label> <label>Height: <input id="canvasHeight" type="number" /></label><br />
+        <label>Base profile size: <input id="profileSize" type="number" /></label><br />
         <button class="btn" id="saveConfigurationBtn" onclick="saveConfiguration()">Generate Backup Link</button><br />
         <label>Load backup: <input id="loadConfigInput" type="file"></label><br />
+    </div><br />
+    <div id="generateContainer" class="generate-container">
+        <button id="generateButton" class="btn" onclick="generateImage()">Generate Image</button><br />
     </div>
 
     <script src="scripts.js"></script>
