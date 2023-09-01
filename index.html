@@ -20,24 +20,56 @@
             <label>Handle:<input type="text" class="profile-handle" placeholder="(optional) @handle" /></label>
             <label> Shape:
                 <select class="shape-selector">
-                    <option value="circle">Circle</option>
-                    <option value="hex">Hex</option>
-                    <option value="square">Square</option>
+                    <option value="circle">Normal (circle)</option>
+                    <option value="hex">NFT (hex)</option>
+                    <option value="square">Org (square)</option>
                 </select>
-            </label>
-            <h3>Adjustments</h3>
-            <label>Scale:</label><input class="profile-scale" type="range" min="0.1" max="2" step="0.01" value="1" /><input class="profile-scale-numeric" type="number" min="0.1" max="2" step="0.01" value="1" /><br />
-            <label>X position:</label><input class="profile-x-numeric" type="number" value="0" /><br />
-            <label>Y position:</label><input class="profile-y-numeric" type="number" value="0" />
-            <br />
+            </label><br />
+            <button class="toggle-adjustments-btn btn">Edit Adjustments</button>
+            <div class="adjustments-div" style="display: none;">
+                <label>Scale:</label><input class="profile-scale" type="range" min="0.1" max="2" step="0.01" value="1" /><input class="profile-scale-numeric" type="number" min="0.1" max="2" step="0.01" value="1" /><br />
+                <label>X position:</label><input class="profile-x-numeric" type="number" value="0" /><br />
+                <label>Y position:</label><input class="profile-y-numeric" type="number" value="0" />
+            </div>
             <button class="add-account-btn">Add Account</button>
         </div>
     </div><br />
     <div id="backupContainer" class="backup-container">
         <h2>General Configuration</h2>
 
-        <label>Width: <input id="canvasWidth" type="number" /></label> <label>Height: <input id="canvasHeight" type="number" /></label><br />
+        <label>Background color: 
+            <input id="backgroundColor" type="color" value="#000000" />
+        </label><br />
+        <label>Width:
+            <input id="canvasWidth" type="number" />
+        </label>
+        <label>Height: 
+            <input id="canvasHeight" type="number" />
+        </label><br />
+
         <label>Base profile size: <input id="profileSize" type="number" /></label><br />
+        <h3>Connectors</h3>
+        <label>Line color: 
+            <input id="lineColor" type="color" value="#ffffff" />
+        </label><br />
+    
+        <label>Line width: 
+            <input id="lineWidth" type="range" min="1" max="10" step="1" value="2" />
+            <input id="lineWidthNumeric" type="number" min="1" value="2" />
+        </label><br />
+    
+        <label>Line type:
+            <select id="lineType">
+                <option value="solid">Solid</option>
+                <option value="dashed">Dashed</option>
+                <option value="dotted">Dotted</option>
+                <!-- You can add more line types if needed -->
+            </select>
+        </label><br />
+
+        <label><input id="touchMode" type="checkbox" />Touch mode (does not allow moving profile pictures below)</label>
+
+        <h3>Backup</h3>
         <button class="btn" id="saveConfigurationBtn" onclick="saveConfiguration()">Generate Backup Link</button><br />
         <label>Load backup: <input id="loadConfigInput" type="file"></label><br />
     </div><br />
