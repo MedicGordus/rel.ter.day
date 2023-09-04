@@ -8,7 +8,7 @@ h1 {
     text-align:center;
 }
 
-.main-container, .backup-container, .generate-container {
+.main-container, .config-container, .generate-container {
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
@@ -73,7 +73,7 @@ h1 {
     background-color: #45a049; /* A darker shade of green for hover */
 }
 
-.delete-account-btn {
+.delete-account-btn, .close-popup-btn {
     padding: 8px 15px;
     font-size: 14px;
     border: none;
@@ -101,4 +101,10 @@ h1 {
 
 .paste-image-btn:hover {
     background-color: #666;
+}
+.canvas-account-container {
+    position: absolute;
+    z-index: 10; /* Any value higher than the canvas and other elements */
+    top: 0px;
+    left: 0px;
 }

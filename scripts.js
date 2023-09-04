@@ -65,107 +65,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function loadImagePreviewAndUpdateBackground(img, parentNode)
-    {
-        const container = parentNode;
-        container.style.backgroundImage = `url(${img.src})`;
-        container.style.backgroundBlendMode = 'multiply';
-        container.style.backgroundColor = 'rgba(68, 68, 68, 1)';
-
-        // Get the preview element
-        const previewElem = document.getElementById(parentNode.id + 'Preview');
-    
-        // Check if there's an existing image inside the preview element and replace it, otherwise append the new image
-        const existingImg = previewElem.querySelector('img');
-        if (existingImg) {
-            previewElem.replaceChild(img, existingImg);
-        } else {
-            previewElem.appendChild(img);
-        }
-    }
-
-    function addNewAccount(parentElement) {
-        // Get the count of account containers within the parent element
-        const accountCount = parentElement.querySelectorAll('.account-container').length;
-
-        const newAccountDiv = document.createElement('div');
-        newAccountDiv.className = 'account-container';
-        newAccountDiv.id = parentElement.id + '.' + accountCount;
-
-        const imagePreview = document.createElement('div');
-        imagePreview.className = 'account-image-preview';
-        imagePreview.id = parentElement.id + '.' + accountCount + 'Preview';
-
-        const pasteButton = document.createElement('button');
-        pasteButton.className = 'paste-image-btn';
-        pasteButton.textContent = 'Paste Image';
-
-        const imageInput = document.createElement('input');
-        imageInput.type = 'file';
-        imageInput.className = 'profile-image-upload';
-
-        const labelHandle = document.createElement('label');
-        labelHandle.textContent = 'Handle:';
-        const handleInput = document.createElement('input');
-        handleInput.type = 'text';
-        handleInput.className = 'profile-handle';
-        handleInput.placeholder = '(optional) @handle';
-        labelHandle.appendChild(handleInput);
-
-        const labelShape = document.createElement('label');
-        labelShape.textContent = " Shape:"
-
-        const shapeSelect = document.createElement('select');
-        shapeSelect.className = 'shape-selector';
-        shapeSelect.innerHTML = `
-                <option value="circle">Normal (circle)</option>
-                <option value="hex">NFT (hex)</option>
-                <option value="square">Org (square)</option>
-            `;
-        labelShape.appendChild(shapeSelect);
-
-        const toggleAdjustmentsButton = document.createElement('button');
-        toggleAdjustmentsButton.className = 'toggle-adjustments-btn btn';
-        toggleAdjustmentsButton.textContent = 'Edit Adjustments';
-    
-        const adjustmentsDiv = document.createElement('div');
-        adjustmentsDiv.className = 'adjustments-div';
-        adjustmentsDiv.style.display = 'none';
-    
-        const adjustmentsContent = `
-            <label>Scale:</label><input class="profile-scale" type="range" min="0.1" max="2" step="0.01" value="1" />
-            <input class="profile-scale-numeric" type="number" min="0.1" max="2" step="0.01" value="1" /><br />
-            <label>X position:</label><input class="profile-x-numeric" type="number" value="0" /><br />
-            <label>Y position:</label><input class="profile-y-numeric" type="number" value="0" />
-        `;
-        adjustmentsDiv.innerHTML = adjustmentsContent;
-
-        const addButton = document.createElement('button');
-        addButton.className = 'add-account-btn';
-        addButton.textContent = 'Add Account';
-
-        const deleteButton = document.createElement('button');
-        deleteButton.className = 'delete-account-btn';
-        deleteButton.innerText = 'Delete';
-
-        newAccountDiv.appendChild(imagePreview);
-        newAccountDiv.appendChild(pasteButton);
-        newAccountDiv.appendChild(imageInput);
-        newAccountDiv.appendChild(labelHandle);
-        newAccountDiv.appendChild(labelShape);
-        newAccountDiv.appendChild(document.createElement('br'));
-        newAccountDiv.appendChild(toggleAdjustmentsButton);
-        newAccountDiv.appendChild(adjustmentsDiv);
-        newAccountDiv.appendChild(addButton);
-        newAccountDiv.appendChild(deleteButton);
-
-        // select the last add account button (which is the one in our div)
-        var nodes = parentElement.querySelectorAll('.add-account-btn');
-
-        // add new right above the button
-        parentElement.insertBefore(newAccountDiv, nodes[nodes.length -1]);
-    }
-
     document.addEventListener('change', function(event) {
         if (event.target && event.target.className === 'profile-image-upload') {
             const file = event.target.files[0];
@@ -238,67 +137,6 @@ document.addEventListener('DOMContentLoaded', function() {
         reader.readAsText(file);
     });
 
-    function restoreAccount(accountConfig, accountContainer) {
-
-        // Set the image for the account
-        const imageElem = new Image();
-        imageElem.onload = function() {
-            loadImagePreviewAndUpdateBackground(imageElem, accountContainer);
-        };
-        imageElem.src = accountConfig.imageData;
-
-        // Set the shape selector value
-        const shapeSelector = accountContainer.querySelector('.shape-selector');
-        if (shapeSelector) {
-            shapeSelector.value = accountConfig.shape;
-        }
-
-        // handle value
-        const profileHandle = accountContainer.querySelector('.profile-handle');
-        if(profileHandle)
-        {
-            profileHandle.value = accountConfig.handle;
-        }
-
-        // Set the scale values
-        const profileScale = accountContainer.querySelector('.profile-scale');
-        const profileScaleNumeric = accountContainer.querySelector('.profile-scale-numeric');
-        if (profileScale && profileScaleNumeric) {
-            profileScale.value = accountConfig.scale;
-            profileScaleNumeric.value = accountConfig.scale;
-        }
-
-        // x/y position shift values
-        const profileXNumeric = accountContainer.querySelector('.profile-x-numeric');
-        if(profileXNumeric)
-        {
-            profileXNumeric.value = accountConfig.xshift;
-        }
-        const profileYNumeric = accountContainer.querySelector('.profile-y-numeric');
-        if(profileYNumeric)
-        {
-            profileYNumeric.value = accountConfig.xshift;
-        }
-
-        // If there are nested accounts, restore them recursively
-        if (accountConfig.accounts) {
-            Object.values(accountConfig.accounts).forEach(subAccountConfig => {
-                restoreNewAccount(subAccountConfig, accountContainer);
-            });
-        }
-    }
-
-    function restoreNewAccount(accountConfig, parentElement) {
-        // "Click" the 'Add Account' button to create a new account entry
-        const addAccountButton = parentElement.querySelector('.add-account-btn');
-        if (addAccountButton) {
-            addAccountButton.click();
-        }
-
-        // Get the newly added account container
-        const newAccountContainer = addAccountButton.previousSibling;
-        restoreAccount(accountConfig, newAccountContainer);
-    }
     const CANVAS_WIDTH = 3840;  // 4k width
     const CANVAS_HEIGHT = 2160; // 4k height
     const BASE_SIZE = 250;      // Base size for the main profile image
@@ -308,32 +146,279 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('profileSize').value = BASE_SIZE;
 });
 
-function generateImage() {
-    let canvas = document.getElementById('outputCanvas');
-    if(canvas)
+function loadImagePreviewAndUpdateBackground(img, parentNode)
+{
+    const container = parentNode;
+    container.style.backgroundImage = `url(${img.src})`;
+    container.style.backgroundBlendMode = 'multiply';
+    container.style.backgroundColor = 'rgba(68, 68, 68, 1)';
+
+    // Get the preview element
+    const previewElem = document.getElementById(parentNode.id + 'Preview');
+
+    // Check if there's an existing image inside the preview element and replace it, otherwise append the new image
+    const existingImg = previewElem.querySelector('img');
+    if (existingImg) {
+        previewElem.replaceChild(img, existingImg);
+    } else {
+        previewElem.appendChild(img);
+    }
+}
+
+function restoreNewAccount(accountConfig, parentElement) {
+    // "Click" the 'Add Account' button to create a new account entry
+    const addAccountButton = parentElement.querySelector('.add-account-btn');
+    if (addAccountButton) {
+        addAccountButton.click();
+    }
+
+    // Get the newly added account container
+    const newAccountContainer = addAccountButton.previousSibling;
+    restoreAccount(accountConfig, newAccountContainer);
+}
+
+function restoreAccount(accountConfig, accountContainer, restoreNestedAccounts = true) {
+
+    // Set the image for the account
+    const imageElem = new Image();
+    imageElem.onload = function() {
+        loadImagePreviewAndUpdateBackground(imageElem, accountContainer);
+    };
+    imageElem.src = accountConfig.imageData;
+
+    // Set the shape selector value
+    const shapeSelector = accountContainer.querySelector('.shape-selector');
+    if (shapeSelector) {
+        shapeSelector.value = accountConfig.shape;
+    }
+
+    // handle value
+    const profileHandle = accountContainer.querySelector('.profile-handle');
+    if(profileHandle)
     {
-        canvas = document.createElement('canvas');
-        document.getElementById('outputCanvas').replaceWith(canvas);
+        profileHandle.value = accountConfig.handle;
+    }
+
+    // Set the scale values
+    const profileScale = accountContainer.querySelector('.profile-scale');
+    const profileScaleNumeric = accountContainer.querySelector('.profile-scale-numeric');
+    if (profileScale && profileScaleNumeric) {
+        profileScale.value = accountConfig.scale;
+        profileScaleNumeric.value = accountConfig.scale;
+    }
+
+    // x/y position shift values
+    const profileXNumeric = accountContainer.querySelector('.profile-x-numeric');
+    if(profileXNumeric)
+    {
+        profileXNumeric.value = accountConfig.xshift;
+    }
+    const profileYNumeric = accountContainer.querySelector('.profile-y-numeric');
+    if(profileYNumeric)
+    {
+        profileYNumeric.value = accountConfig.xshift;
+    }
+
+    if(restoreNestedAccounts)
+    {
+        // If there are nested accounts, restore them recursively
+        if (accountConfig.accounts) {
+            Object.values(accountConfig.accounts).forEach(subAccountConfig => {
+                restoreNewAccount(subAccountConfig, accountContainer);
+            });
+        }
+    }
+}
+
+function addNewAccount(parentElement) {
+    // Get the count of account containers within the parent element
+    const accountCount = parentElement.querySelectorAll('.account-container').length;
+
+    //// guarantee that no box has the same id as another
+    //
+    let newId = parentElement.id + '-' + accountCount;
+    let duplicates = parentElement.querySelectorAll('#' + newId).length;
+    while(duplicates > 0)
+    {
+        accountCount++;
+        newId = parentElement.id + '-' + accountCount;
+        duplicates = parentElement.querySelectorAll('#' + newId).length;
+    }
+    //
+    ////
+
+    const newAccountDiv = document.createElement('div');
+    newAccountDiv.className = 'account-container';
+    newAccountDiv.id = newId;
+
+    const imagePreview = document.createElement('div');
+    imagePreview.className = 'account-image-preview';
+    imagePreview.id = newId + 'Preview';
+
+    const pasteButton = document.createElement('button');
+    pasteButton.className = 'paste-image-btn';
+    pasteButton.textContent = 'Paste Image';
+
+    const imageInput = document.createElement('input');
+    imageInput.type = 'file';
+    imageInput.className = 'profile-image-upload';
+
+    const labelHandle = document.createElement('label');
+    labelHandle.textContent = 'Handle:';
+    const handleInput = document.createElement('input');
+    handleInput.type = 'text';
+    handleInput.className = 'profile-handle';
+    handleInput.placeholder = '(optional) @handle';
+    labelHandle.appendChild(handleInput);
+
+    const labelShape = document.createElement('label');
+    labelShape.textContent = " Shape:"
+
+    const shapeSelect = document.createElement('select');
+    shapeSelect.className = 'shape-selector';
+    shapeSelect.innerHTML = `
+            <option value="circle">Normal (circle)</option>
+            <option value="hex">NFT (hex)</option>
+            <option value="square">Org (square)</option>
+        `;
+    labelShape.appendChild(shapeSelect);
+
+    const toggleAdjustmentsButton = document.createElement('button');
+    toggleAdjustmentsButton.className = 'toggle-adjustments-btn btn';
+    toggleAdjustmentsButton.textContent = 'Edit Adjustments';
+
+    const adjustmentsDiv = document.createElement('div');
+    adjustmentsDiv.className = 'adjustments-div';
+    adjustmentsDiv.style.display = 'none';
+
+    const adjustmentsContent = `
+        <label>Scale:</label><input class="profile-scale" type="range" min="0.1" max="2" step="0.01" value="1" />
+        <input class="profile-scale-numeric" type="number" min="0.1" max="2" step="0.01" value="1" /><br />
+        <label>X position:</label><input class="profile-x-numeric" type="number" value="0" /><br />
+        <label>Y position:</label><input class="profile-y-numeric" type="number" value="0" />
+    `;
+    adjustmentsDiv.innerHTML = adjustmentsContent;
+
+    const addButton = document.createElement('button');
+    addButton.className = 'add-account-btn';
+    addButton.textContent = 'Add Account';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'delete-account-btn';
+    deleteButton.innerText = 'Delete';
+
+    newAccountDiv.appendChild(imagePreview);
+    newAccountDiv.appendChild(pasteButton);
+    newAccountDiv.appendChild(imageInput);
+    newAccountDiv.appendChild(labelHandle);
+    newAccountDiv.appendChild(labelShape);
+    newAccountDiv.appendChild(document.createElement('br'));
+    newAccountDiv.appendChild(toggleAdjustmentsButton);
+    newAccountDiv.appendChild(adjustmentsDiv);
+    newAccountDiv.appendChild(addButton);
+    newAccountDiv.appendChild(deleteButton);
+
+    // select the last add account button (which is the one in our div)
+    var nodes = parentElement.querySelectorAll('.add-account-btn');
+
+    // add new right above the button
+    parentElement.insertBefore(newAccountDiv, nodes[nodes.length -1]);
+}
+
+function popupAccount(parentElement) {
+    const popupAccountDiv = document.createElement('div');
+    popupAccountDiv.className = 'account-container';
+    popupAccountDiv.id = parentElement.id + '-popup';
+
+    const imagePreview = document.createElement('div');
+    imagePreview.className = 'account-image-preview';
+    imagePreview.id = parentElement.id + '-popupPreview';
+
+    const pasteButton = document.createElement('button');
+    pasteButton.className = 'paste-image-btn';
+    pasteButton.textContent = 'Paste Image';
+
+    const imageInput = document.createElement('input');
+    imageInput.type = 'file';
+    imageInput.className = 'profile-image-upload';
+
+    const labelHandle = document.createElement('label');
+    labelHandle.textContent = 'Handle:';
+    const handleInput = document.createElement('input');
+    handleInput.type = 'text';
+    handleInput.className = 'profile-handle';
+    handleInput.placeholder = '(optional) @handle';
+    labelHandle.appendChild(handleInput);
+
+    const labelShape = document.createElement('label');
+    labelShape.textContent = " Shape:"
+
+    const shapeSelect = document.createElement('select');
+    shapeSelect.className = 'shape-selector';
+    shapeSelect.innerHTML = `
+            <option value="circle">Normal (circle)</option>
+            <option value="hex">NFT (hex)</option>
+            <option value="square">Org (square)</option>
+        `;
+    labelShape.appendChild(shapeSelect);
+
+    const adjustmentsDiv = document.createElement('div');
+    adjustmentsDiv.className = 'adjustments-div';
+
+    const adjustmentsContent = `
+        <label>Scale:</label><input class="profile-scale" type="range" min="0.1" max="2" step="0.01" value="1" />
+        <input class="profile-scale-numeric" type="number" min="0.1" max="2" step="0.01" value="1" /><br />
+        <label>X position:</label><input class="profile-x-numeric" type="number" value="0" /><br />
+        <label>Y position:</label><input class="profile-y-numeric" type="number" value="0" />
+    `;
+    adjustmentsDiv.innerHTML = adjustmentsContent;
+
+    const closeButton = document.createElement('button');
+    closeButton.className = 'close-popup-btn';
+    closeButton.innerText = 'Close';
+
+    popupAccountDiv.appendChild(imagePreview);
+    popupAccountDiv.appendChild(pasteButton);
+    popupAccountDiv.appendChild(imageInput);
+    popupAccountDiv.appendChild(labelHandle);
+    popupAccountDiv.appendChild(labelShape);
+    popupAccountDiv.appendChild(document.createElement('br'));
+    popupAccountDiv.appendChild(adjustmentsDiv);
+    popupAccountDiv.appendChild(closeButton);
+
+    // add new right above the button
+    parentElement.insertBefore(popupAccountDiv, null);
+}
+
+// Create an off-screen canvas that is used to make the main canvas not appear to be flashy
+const bufferCanvas = document.createElement('canvas');
+bufferCanvas.width = 0;
+bufferCanvas.height = 0;
+bufferCanvas.id = 'bufferCanvas';
+const bufferCanvasCtx = bufferCanvas.getContext('2d');
+
+function generateImage() {
+    let visibleCanvas = document.getElementById('outputCanvas');
+    if(visibleCanvas)
+    {
+        visibleCanvas = document.createElement('canvas');
+        document.getElementById('outputCanvas').replaceWith(visibleCanvas);
     }
     else
     {
-        canvas = document.createElement('canvas');
+        visibleCanvas = document.createElement('canvas');
     }
-    canvas.id = 'outputCanvas';
-    const ctx = canvas.getContext('2d');
+    visibleCanvas.id = 'outputCanvas';
+    const visibleCanvasCtx = visibleCanvas.getContext('2d');
 
-    // Draw your content onto the canvas.
-    // For example, draw all the profile images, apply scales, etc.
-
-    document.getElementById('generateContainer').insertBefore(canvas,document.getElementById('generateButton'));
-
+    document.getElementById('generateContainer').insertBefore(visibleCanvas,document.getElementById('generateButton'));
     
     let existingA = document.getElementById('downloadImageA');
     if(existingA)
     {
         existingA.remove();
     }
-    const imgURL = canvas.toDataURL('image/png');
+    const imgURL = visibleCanvas.toDataURL('image/png');
 
     const a = document.createElement('a');
     a.id = "downloadImageA";
@@ -342,8 +427,15 @@ function generateImage() {
     a.download = 'profileImage.png';
     document.getElementById('generateContainer').insertBefore(a, document.getElementById('generateButton'));
 
-    canvas.width = parseInt(document.getElementById('canvasWidth').value);
-    canvas.height = parseInt(document.getElementById('canvasHeight').value);
+
+    // Start with the main account centered
+    canvasData = collectConfig();
+
+    // configure size of canvas based on user config
+    visibleCanvas.width = canvasData.canvasWidth;
+    visibleCanvas.height = canvasData.canvasHeight;
+    bufferCanvas.width = canvasData.canvasWidth;
+    bufferCanvas.height = canvasData.canvasHeight;
 
     // helper for the twitter NFT shape
     function transformPath(pathStr, scale, offsetX, offsetY) {
@@ -382,42 +474,42 @@ function generateImage() {
     }
 
     // Helper function to crop images based on shape
-    function drawCroppedImage(img, x, y, size, shape, scale) {
+    function drawCroppedImage(img, x, y, size, shape, scale, ctxReference) {
         const adjustedSize = size * scale;
 
         switch (shape) {
             case 'circle':
-                ctx.save();
-                ctx.beginPath();
-                ctx.arc(x, y, adjustedSize / 2, 0, 2 * Math.PI, false);
-                ctx.clip();
-                ctx.drawImage(img, x - adjustedSize / 2, y - adjustedSize / 2, adjustedSize, adjustedSize);
-                ctx.restore();
+                ctxReference.save();
+                ctxReference.beginPath();
+                ctxReference.arc(x, y, adjustedSize / 2, 0, 2 * Math.PI, false);
+                ctxReference.clip();
+                ctxReference.drawImage(img, x - adjustedSize / 2, y - adjustedSize / 2, adjustedSize, adjustedSize);
+                ctxReference.restore();
                 break;
             case 'square':
                 // Calculate corner clipping ratio
                 const clipRatio = 12 / 200; // the current org clip is 12px/200px
                 const cornerClipSize = adjustedSize * clipRatio;
 
-                ctx.save();
+                ctxReference.save();
 
                 // Begin path for clipping
-                ctx.beginPath();
+                ctxReference.beginPath();
                 // Starting top-left and going clockwise
-                ctx.moveTo(x - adjustedSize / 2 + cornerClipSize, y - adjustedSize / 2); 
-                ctx.arcTo(x + adjustedSize / 2, y - adjustedSize / 2, x + adjustedSize / 2, y + adjustedSize / 2, cornerClipSize);
-                ctx.arcTo(x + adjustedSize / 2, y + adjustedSize / 2, x - adjustedSize / 2, y + adjustedSize / 2, cornerClipSize);
-                ctx.arcTo(x - adjustedSize / 2, y + adjustedSize / 2, x - adjustedSize / 2, y - adjustedSize / 2, cornerClipSize);
-                ctx.arcTo(x - adjustedSize / 2, y - adjustedSize / 2, x + adjustedSize / 2, y - adjustedSize / 2, cornerClipSize);
-                ctx.closePath();
+                ctxReference.moveTo(x - adjustedSize / 2 + cornerClipSize, y - adjustedSize / 2); 
+                ctxReference.arcTo(x + adjustedSize / 2, y - adjustedSize / 2, x + adjustedSize / 2, y + adjustedSize / 2, cornerClipSize);
+                ctxReference.arcTo(x + adjustedSize / 2, y + adjustedSize / 2, x - adjustedSize / 2, y + adjustedSize / 2, cornerClipSize);
+                ctxReference.arcTo(x - adjustedSize / 2, y + adjustedSize / 2, x - adjustedSize / 2, y - adjustedSize / 2, cornerClipSize);
+                ctxReference.arcTo(x - adjustedSize / 2, y - adjustedSize / 2, x + adjustedSize / 2, y - adjustedSize / 2, cornerClipSize);
+                ctxReference.closePath();
                 
                 // Clip the drawing region
-                ctx.clip();
+                ctxReference.clip();
 
                 // Draw the image
-                ctx.drawImage(img, x - adjustedSize / 2, y - adjustedSize / 2, adjustedSize, adjustedSize);
+                ctxReference.drawImage(img, x - adjustedSize / 2, y - adjustedSize / 2, adjustedSize, adjustedSize);
 
-                ctx.restore();
+                ctxReference.restore();
                 break;
             case 'hex':
                 // this svg is 200 wide and 188 high.
@@ -432,64 +524,91 @@ function generateImage() {
                         (y - (adjustedSize / 2)) + ((adjustedSize - (188 * (adjustedSize/200)))/2) // this shifts the hexagon down (centers it) since the hex is shorter than it is wide
                     )
                 );
-                ctx.save();
-                ctx.clip(scaledPath);
-                ctx.drawImage(img, x - adjustedSize / 2, y - adjustedSize / 2, adjustedSize, adjustedSize);
-                ctx.restore();
+                ctxReference.save();
+                ctxReference.clip(scaledPath);
+                ctxReference.drawImage(img, x - adjustedSize / 2, y - adjustedSize / 2, adjustedSize, adjustedSize);
+                ctxReference.restore();
 
                 break;
 
             // Additional cases for other shapes can be added
             default:
-                ctx.drawImage(img, x - adjustedSize / 2, y - adjustedSize / 2, adjustedSize, adjustedSize);
+                ctxReference.drawImage(img, x - adjustedSize / 2, y - adjustedSize / 2, adjustedSize, adjustedSize);
         }
     }
 
     // Recursive function to draw the profile pictures and connections
-    function drawAccount(accountConfig, x, y, depth) {
-        const imageElem = new Image();
-        imageElem.onload = function() {
-            const baseProfileSize = parseInt(document.getElementById('profileSize').value);
-            const currentSize = baseProfileSize / (depth + 1);
+    function drawAccount(accountConfig, x, y, depth, ctxReference) {
+        return new Promise((resolve, reject) => {
+            const imageElem = new Image();
+    
+            imageElem.onload = function() {
+                const baseProfileSize = parseInt(document.getElementById('profileSize').value);
+                const currentSize = baseProfileSize / (depth + 1);
+    
+                // store the rendersize so the canvas can be edited
+                accountConfig.renderSize = currentSize;
+                accountConfig.renderCenterX = x;
+                accountConfig.renderCenterY = y;
+    
+                x = parseFloat(x) + parseFloat(accountConfig.xshift ?? 0);
+                y = parseFloat(y) + parseFloat(accountConfig.yshift ?? 0);
+    
+                drawCroppedImage(imageElem, x, y, currentSize, accountConfig.shape, accountConfig.scale, ctxReference);
+    
+                if (accountConfig.accounts) {
+                    const numSubAccounts = Object.keys(accountConfig.accounts).length;
+                    const angleBetween = 360 / numSubAccounts;
+    
+                    let currentAngle = 0;
+    
+                    // store the promises
+                    const subAccountPromises = [];
 
-            // store the rendersize so the canvas can be edited
-            accountConfig.renderSize = currentSize;
-            accountConfig.renderCenterX = x;
-            accountConfig.renderCenterY = y;
+                    for (const subAccountConfig of Object.values(accountConfig.accounts)) {
+                        const childX = x + (currentSize * 1.5) * Math.cos(currentAngle * (Math.PI / 180));
+                        const childY = y + (currentSize * 1.5) * Math.sin(currentAngle * (Math.PI / 180));
+    
+                        // Draw a line connection
+                        ctxReference.beginPath();
+                        ctxReference.moveTo(x, y);
+                        ctxReference.lineTo(childX, childY);
+                        ctxReference.stroke();
+    
+                        // Draw the sub-account
+                        subAccountPromises.push(
+                            drawAccount(
+                                subAccountConfig,
+                                childX,
+                                childY,
+                                depth + 1,
+                                ctxReference
+                            )
+                        );
 
-            x = parseFloat(x) + parseFloat(accountConfig.xshift ?? 0);
-            y = parseFloat(y) + parseFloat(accountConfig.yshift ?? 0);
+                        currentAngle += angleBetween;
+                    }
 
-            drawCroppedImage(imageElem, x, y, currentSize, accountConfig.shape, accountConfig.scale);
-
-            if (accountConfig.accounts) {
-                const numSubAccounts = Object.keys(accountConfig.accounts).length;
-                const angleBetween = 360 / numSubAccounts;
-
-                let currentAngle = 0;
-
-                for (const subAccountConfig of Object.values(accountConfig.accounts)) {
-                    const childX = x + (currentSize * 1.5) * Math.cos(currentAngle * (Math.PI / 180));
-                    const childY = y + (currentSize * 1.5) * Math.sin(currentAngle * (Math.PI / 180));
-
-                    // Draw a line connection
-                    ctx.beginPath();
-                    ctx.moveTo(x, y);
-                    ctx.lineTo(childX, childY);
-                    ctx.stroke();
-
-                    // Draw the sub-account
-                    drawAccount(subAccountConfig, childX, childY, depth + 1);
-
-                    currentAngle += angleBetween;
+                    // Wait for all subAccounts to finish drawing
+                    Promise.all(subAccountPromises)
+                        .then(() =>{
+                            resolve();
+                        }).catch(err => reject(err));
                 }
-            }
-        };
-        imageElem.src = accountConfig.imageData;
+                else
+                {
+                    resolve();
+                }
+            };
+    
+            imageElem.onerror = function() {
+                console.error('Error loading image');
+                reject(new Error('Image loading failed'));
+            };
+    
+            imageElem.src = accountConfig.imageData;
+        })
     }
-
-    // Start with the main account centered
-    canvasData = collectConfig();
 
     //// collect canvas edit data
     //
@@ -516,41 +635,52 @@ function generateImage() {
     canvasData.isDragging = false;
     canvasData.draggedProfile = null;
     //
-    canvasData.isRedrawing = false;
-    canvasData.needsRedraw = false;
+    canvasData.redrawInProgress = false;
+    canvasData.pendingRedraw = false;
     //
     ////
 
+    // perform frame render
     redrawCanvas();
 
     function redrawCanvas()
     {
-        // If already redrawing, set the flag to indicate another redraw is required
-        if (canvasData.isRedrawing) {
-            canvasData.needsRedraw = true;
+        if (canvasData.redrawInProgress) {
+            if (!canvasData.pendingRedraw) {
+                canvasData.pendingRedraw = new Promise((resolve) => {
+                    requestAnimationFrame(() => {
+                        redrawCanvas();
+                        resolve();
+                    });
+                }).then(() => {
+                    canvasData.pendingRedraw = null;
+                });
+            }
             return;
         }
+    
+        canvasData.redrawInProgress = true;
 
-        canvasData.isRedrawing = true;
+        // Clear the off-screen canvas
+        bufferCanvasCtx.clearRect(0, 0, canvasData.canvasWidth, canvasData.canvasHeight);
 
-        // fill rect
-        ctx.fillStyle = canvasData.backgroundColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Now fill rect with background color on off-screen canvas
+        bufferCanvasCtx.fillStyle = canvasData.backgroundColor;
+        bufferCanvasCtx.fillRect(0, 0, canvasData.canvasWidth, canvasData.canvasHeight);
+
         drawAccount(
             canvasData.mainAccount,
             canvasData.canvasWidth / 2,
             canvasData.canvasHeight / 2,
-            0
-        );
+            0,
+            bufferCanvasCtx
+        ).then(() => {
+            // Copy the off-screen buffer canvas to the visible canvas
+            visibleCanvasCtx.clearRect(0, 0, canvasData.canvasWidth, canvasData.canvasHeight);
+            visibleCanvasCtx.drawImage(bufferCanvas, 0, 0);
 
-        // Finished redrawing
-        canvasData.isRedrawing = false;
-        
-        // Check if a redraw was requested while this one was in progress
-        if (canvasData.needsRedraw) {
-            canvasData.needsRedraw = false; // Reset the flag
-            redrawCanvas();      // Start another redraw
-        }
+            canvasData.redrawInProgress = false;
+        });
     }
 
 
@@ -587,19 +717,48 @@ function generateImage() {
         return null;
     }
     //
-    canvas.addEventListener('click', function(e) {
-        const rect = canvas.getBoundingClientRect();
+    visibleCanvas.addEventListener('click', function(e) {
+        const rect = visibleCanvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
     
         const clickedProfile = profileClicked(x, y);
         if (clickedProfile) {
-            console.log('click detected: '+clickedProfile.shape)
+            let floatingDiv = document.getElementById('canvasAccountContainer');
+            if(floatingDiv)
+            {
+                const newFloatingDiv = document.createElement('div');
+                document.body.replaceChild(newFloatingDiv, floatingDiv);
+                floatingDiv = newFloatingDiv;
+            }
+            else
+            {
+                floatingDiv = document.createElement('div');;
+            }
+            floatingDiv.id = 'canvasAccountContainer';
+            floatingDiv.className = 'canvas-account-container';
+            floatingDiv.style.left = (rect.left + window.scrollX + parseFloat(clickedProfile.renderCenterX) + parseFloat(clickedProfile.xshift) + (0.5* parseFloat(clickedProfile.renderSize)) + 20) + 'px';
+            floatingDiv.style.top = (rect.top + window.scrollY + parseFloat(clickedProfile.renderCenterY) + parseFloat(clickedProfile.yshift) + (-0.5 * parseFloat(clickedProfile.renderSize)) + 20) + 'px';
+            popupAccount(floatingDiv);
+
+            //restoreAccount(clickedProfile, floatingDiv.childNodes[0], false);
+/*
+            floatingDiv.querySelector('close-popup-btn').addEventListener('click', function(e) {
+                floatingDiv.remove();
+                redrawCanvas();
+            });
+*/
+
+            document.body.insertBefore(floatingDiv,null);
         }
     });
     //
-    canvas.addEventListener('mousedown', function(e) {
-        const rect = canvas.getBoundingClientRect();
+    visibleCanvas.addEventListener('mousedown', function(e) {
+        if(document.getElementById('touchMode').checked)
+        {
+            return;
+        }
+        const rect = visibleCanvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
     
@@ -609,10 +768,10 @@ function generateImage() {
         }
     });
     //
-    canvas.addEventListener('mousemove', function(e) {
+    visibleCanvas.addEventListener('mousemove', function(e) {
         if (!canvasData.isDragging || !canvasData.draggedProfile) return;
     
-        const rect = canvas.getBoundingClientRect();
+        const rect = visibleCanvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
     
@@ -623,12 +782,13 @@ function generateImage() {
         redrawCanvas();
     });
     //
-    canvas.addEventListener('mouseup', function(e) {
+    visibleCanvas.addEventListener('mouseup', function(e) {
         canvasData.isDragging = false;
         canvasData.draggedProfile = null;
     });
     //
     ////
+
 }
 
 function collectAccountData(container) {
@@ -689,7 +849,7 @@ function saveConfiguration() {
     }
     else
     {
-        document.getElementById('backupContainer').insertBefore(a, document.getElementById('saveConfigurationBtn'));
+        document.getElementById('configContainer').insertBefore(a, document.getElementById('saveConfigurationBtn'));
     }
 }
 
