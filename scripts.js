@@ -216,7 +216,7 @@ function restoreAccount(accountConfig, accountContainer, restoreNestedAccounts =
     const profileYNumeric = accountContainer.querySelector('.profile-y-numeric');
     if(profileYNumeric)
     {
-        profileYNumeric.value = accountConfig.xshift;
+        profileYNumeric.value = accountConfig.yshift;
     }
 
     if(restoreNestedAccounts)
@@ -373,9 +373,13 @@ function popupAccount(parentElement) {
     `;
     adjustmentsDiv.innerHTML = adjustmentsContent;
 
-    const closeButton = document.createElement('button');
-    closeButton.className = 'close-popup-btn';
-    closeButton.innerText = 'Close';
+    const saveButton = document.createElement('button');
+    saveButton.className = 'save-popup-btn';
+    saveButton.innerText = 'Save';
+
+    const revertButton = document.createElement('button');
+    revertButton.className = 'revert-popup-btn';
+    revertButton.innerText = 'Revert';
 
     popupAccountDiv.appendChild(imagePreview);
     popupAccountDiv.appendChild(pasteButton);
@@ -384,7 +388,8 @@ function popupAccount(parentElement) {
     popupAccountDiv.appendChild(labelShape);
     popupAccountDiv.appendChild(document.createElement('br'));
     popupAccountDiv.appendChild(adjustmentsDiv);
-    popupAccountDiv.appendChild(closeButton);
+    popupAccountDiv.appendChild(saveButton);
+    popupAccountDiv.appendChild(revertButton);
 
     // add new right above the button
     parentElement.insertBefore(popupAccountDiv, null);
@@ -538,7 +543,7 @@ function generateImage() {
     }
 
     // Recursive function to draw the profile pictures and connections
-    function drawAccount(accountConfig, x, y, depth, ctxReference) {
+    function drawAccount(accountConfig, x, y, depth, ctxReference, data) {
         return new Promise((resolve, reject) => {
             const imageElem = new Image();
     
@@ -554,8 +559,6 @@ function generateImage() {
                 x = parseFloat(x) + parseFloat(accountConfig.xshift ?? 0);
                 y = parseFloat(y) + parseFloat(accountConfig.yshift ?? 0);
     
-                drawCroppedImage(imageElem, x, y, currentSize, accountConfig.shape, accountConfig.scale, ctxReference);
-    
                 if (accountConfig.accounts) {
                     const numSubAccounts = Object.keys(accountConfig.accounts).length;
                     const angleBetween = 360 / numSubAccounts;
@@ -570,9 +573,31 @@ function generateImage() {
                         const childY = y + (currentSize * 1.5) * Math.sin(currentAngle * (Math.PI / 180));
     
                         // Draw a line connection
+                        ctxReference.strokeStyle = data.lineColor;
+                        ctxReference.lineWidth = data.lineWidth;
+                        switch(data.lineType)
+                        {
+                            case "dashed":
+                                // For a dashed line
+                                ctxReference.setLineDash([5, 10]); // 5 pixels of line, followed by 10 pixels of space
+                                break;
+
+                            case "dotted":
+                                // For a dotted line
+                                ctxReference.setLineDash([1, 5]); // 1 pixel of line, followed by 5 pixels of space
+                                break;
+
+                            default:
+                                // For a solid line
+                                ctxReference.setLineDash([]);
+                                break;
+
+                                // For a dash-dot pattern (unused)
+                                // ctxReference.setLineDash([10, 5, 1, 5]); // 10 pixels of line, 5 pixels of space, 1 pixel of line, 5 pixels of space
+                            }
                         ctxReference.beginPath();
                         ctxReference.moveTo(x, y);
-                        ctxReference.lineTo(childX, childY);
+                        ctxReference.lineTo(childX + subAccountConfig.xshift, childY + subAccountConfig.yshift);
                         ctxReference.stroke();
     
                         // Draw the sub-account
@@ -582,12 +607,16 @@ function generateImage() {
                                 childX,
                                 childY,
                                 depth + 1,
-                                ctxReference
+                                ctxReference,
+                                data
                             )
                         );
 
                         currentAngle += angleBetween;
                     }
+    
+                    // draw the profile picture
+                    drawCroppedImage(imageElem, x, y, currentSize, accountConfig.shape, accountConfig.scale, ctxReference);
 
                     // Wait for all subAccounts to finish drawing
                     Promise.all(subAccountPromises)
@@ -635,51 +664,52 @@ function generateImage() {
     canvasData.isDragging = false;
     canvasData.draggedProfile = null;
     //
-    canvasData.redrawInProgress = false;
-    canvasData.pendingRedraw = false;
+    renderStatus.redrawInProgress = false;
+    renderStatus.pendingRedraw = false;
     //
     ////
 
     // perform frame render
-    redrawCanvas();
+    redrawCanvas(canvasData);
 
-    function redrawCanvas()
+    function redrawCanvas(data)
     {
-        if (canvasData.redrawInProgress) {
-            if (!canvasData.pendingRedraw) {
-                canvasData.pendingRedraw = new Promise((resolve) => {
+        if (renderStatus.redrawInProgress) {
+            if (!renderStatus.pendingRedraw) {
+                renderStatus.pendingRedraw = new Promise((resolve) => {
                     requestAnimationFrame(() => {
-                        redrawCanvas();
+                        redrawCanvas(data);
                         resolve();
                     });
                 }).then(() => {
-                    canvasData.pendingRedraw = null;
+                    renderStatus.pendingRedraw = null;
                 });
             }
             return;
         }
     
-        canvasData.redrawInProgress = true;
+        renderStatus.redrawInProgress = true;
 
         // Clear the off-screen canvas
-        bufferCanvasCtx.clearRect(0, 0, canvasData.canvasWidth, canvasData.canvasHeight);
+        bufferCanvasCtx.clearRect(0, 0, data.canvasWidth, data.canvasHeight);
 
         // Now fill rect with background color on off-screen canvas
-        bufferCanvasCtx.fillStyle = canvasData.backgroundColor;
-        bufferCanvasCtx.fillRect(0, 0, canvasData.canvasWidth, canvasData.canvasHeight);
+        bufferCanvasCtx.fillStyle = data.backgroundColor;
+        bufferCanvasCtx.fillRect(0, 0, data.canvasWidth, data.canvasHeight);
 
         drawAccount(
-            canvasData.mainAccount,
-            canvasData.canvasWidth / 2,
-            canvasData.canvasHeight / 2,
+            data.mainAccount,
+            data.canvasWidth / 2,
+            data.canvasHeight / 2,
             0,
-            bufferCanvasCtx
+            bufferCanvasCtx,
+            data
         ).then(() => {
             // Copy the off-screen buffer canvas to the visible canvas
-            visibleCanvasCtx.clearRect(0, 0, canvasData.canvasWidth, canvasData.canvasHeight);
+            visibleCanvasCtx.clearRect(0, 0, data.canvasWidth, data.canvasHeight);
             visibleCanvasCtx.drawImage(bufferCanvas, 0, 0);
 
-            canvasData.redrawInProgress = false;
+            renderStatus.redrawInProgress = false;
         });
     }
 
@@ -691,7 +721,7 @@ function generateImage() {
 
         // Loop through your profiles data to determine if a click was within a profile's area.
         for (let profile of canvasData.profilesData) {
-            const distance = Math.sqrt(Math.pow(x - profile.renderCenterX, 2) + Math.pow(y - profile.renderCenterY, 2));
+            const distance = Math.sqrt(Math.pow(x - (profile.renderCenterX + profile.xshift), 2) + Math.pow(y - (profile.renderCenterY + profile.yshift), 2));
             if (distance <= profile.renderSize / 2) {
                 profilesClicked.push(profile);
             }
@@ -717,42 +747,6 @@ function generateImage() {
         return null;
     }
     //
-    visibleCanvas.addEventListener('click', function(e) {
-        const rect = visibleCanvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-    
-        const clickedProfile = profileClicked(x, y);
-        if (clickedProfile) {
-            let floatingDiv = document.getElementById('canvasAccountContainer');
-            if(floatingDiv)
-            {
-                const newFloatingDiv = document.createElement('div');
-                document.body.replaceChild(newFloatingDiv, floatingDiv);
-                floatingDiv = newFloatingDiv;
-            }
-            else
-            {
-                floatingDiv = document.createElement('div');;
-            }
-            floatingDiv.id = 'canvasAccountContainer';
-            floatingDiv.className = 'canvas-account-container';
-            floatingDiv.style.left = (rect.left + window.scrollX + parseFloat(clickedProfile.renderCenterX) + parseFloat(clickedProfile.xshift) + (0.5* parseFloat(clickedProfile.renderSize)) + 20) + 'px';
-            floatingDiv.style.top = (rect.top + window.scrollY + parseFloat(clickedProfile.renderCenterY) + parseFloat(clickedProfile.yshift) + (-0.5 * parseFloat(clickedProfile.renderSize)) + 20) + 'px';
-            popupAccount(floatingDiv);
-
-            //restoreAccount(clickedProfile, floatingDiv.childNodes[0], false);
-/*
-            floatingDiv.querySelector('close-popup-btn').addEventListener('click', function(e) {
-                floatingDiv.remove();
-                redrawCanvas();
-            });
-*/
-
-            document.body.insertBefore(floatingDiv,null);
-        }
-    });
-    //
     visibleCanvas.addEventListener('mousedown', function(e) {
         if(document.getElementById('touchMode').checked)
         {
@@ -764,27 +758,166 @@ function generateImage() {
     
         canvasData.draggedProfile = profileClicked(x, y);
         if (canvasData.draggedProfile) {
+
+            // turn the flag on that we are dragging a profile
             canvasData.isDragging = true;
+
+            // reset the drag flag so the mouse up knows to handle a drag or a click
+            canvasData.didDrag = false;
         }
     });
     //
     visibleCanvas.addEventListener('mousemove', function(e) {
         if (!canvasData.isDragging || !canvasData.draggedProfile) return;
     
+        // let the mouseup know that a drag occurred
+        canvasData.didDrag = true;
+
         const rect = visibleCanvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
     
         canvasData.draggedProfile.xshift = x - canvasData.draggedProfile.renderCenterX;
         canvasData.draggedProfile.yshift = y - canvasData.draggedProfile.renderCenterY;
+
+        document.getElementById(canvasData.draggedProfile.containerId).querySelector('.profile-x-numeric').value = canvasData.draggedProfile.xshift;
+        document.getElementById(canvasData.draggedProfile.containerId).querySelector('.profile-y-numeric').value = canvasData.draggedProfile.yshift;
     
         // Redraw the canvas with the updated profile positions
-        redrawCanvas();
+        redrawCanvas(canvasData);
     });
     //
     visibleCanvas.addEventListener('mouseup', function(e) {
         canvasData.isDragging = false;
         canvasData.draggedProfile = null;
+
+        // if it was a click and not a drag then handle profile clicked
+        if(!canvasData.didDrag)
+        {
+            const rect = visibleCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+        
+            const clickedProfile = profileClicked(x, y);
+            if (clickedProfile) {
+                let floatingDiv = document.getElementById('canvasAccountContainer');
+                if(floatingDiv)
+                {
+                    const newFloatingDiv = document.createElement('div');
+                    document.body.replaceChild(newFloatingDiv, floatingDiv);
+                    floatingDiv = newFloatingDiv;
+                }
+                else
+                {
+                    floatingDiv = document.createElement('div');;
+                }
+                floatingDiv.id = 'canvasAccountContainer';
+                floatingDiv.className = 'canvas-account-container';
+                floatingDiv.style.left = (rect.left + window.scrollX + parseFloat(clickedProfile.renderCenterX) + parseFloat(clickedProfile.xshift) + (0.5* parseFloat(clickedProfile.renderSize)) + 20) + 'px';
+                floatingDiv.style.top = (rect.top + window.scrollY + parseFloat(clickedProfile.renderCenterY) + parseFloat(clickedProfile.yshift) + (-0.5 * parseFloat(clickedProfile.renderSize)) + 20) + 'px';
+    
+                // create the popup
+                popupAccount(floatingDiv);
+    
+                // fill the popup with currently saved data
+                restoreAccount(clickedProfile, floatingDiv.childNodes[0], false);
+    
+                //// add event handlers to the new popup
+                //
+                // save button
+                floatingDiv.querySelector('.save-popup-btn').addEventListener('click', function(e) {
+                    updateProfileFromDiv(clickedProfile, floatingDiv);
+    
+                    restoreAccount(clickedProfile, document.getElementById(clickedProfile.containerId), false);
+    
+                    floatingDiv.remove();
+                    redrawCanvas(canvasData);
+                });
+                //
+                // revert button
+                floatingDiv.querySelector('.revert-popup-btn').addEventListener('click', function(e) {
+                    floatingDiv.remove();
+                    redrawCanvas(canvasData);
+                });
+                //
+                // helper functions
+                function findClonedProfile(clonedData, idToFind)
+                {
+                    for (let profile of clonedData.profilesData) {
+                        if(profile.containerId == idToFind)
+                        {
+                            return profile;
+                        }
+                    }
+    
+                    return null;
+                }
+                function updateProfileFromDiv(profile, div)
+                {
+                    profile.shape = div.querySelector('.shape-selector').value;
+                    profile.handle = div.querySelector('.profile-handle').value;
+                    profile.scale = parseFloat(div.querySelector('.profile-scale').value);
+                    profile.xshift = parseFloat(div.querySelector('.profile-x-numeric').value);
+                    profile.yshift = parseFloat(div.querySelector('.profile-y-numeric').value);
+                }
+                //
+                // shape change handler
+                floatingDiv.querySelector('.shape-selector').addEventListener('input', function(e) {
+                    const cloneData = structuredClone(canvasData);
+                    let clonedProfile = findClonedProfile(cloneData, clickedProfile.containerId);
+                    updateProfileFromDiv(clonedProfile, floatingDiv);
+                    redrawCanvas(cloneData);
+                });
+                //
+                // profile handle change handler
+                floatingDiv.querySelector('.profile-handle').addEventListener('input', function(e) {
+                    const cloneData = structuredClone(canvasData);
+                    let clonedProfile = findClonedProfile(cloneData, clickedProfile.containerId);
+                    updateProfileFromDiv(clonedProfile, floatingDiv);
+                    redrawCanvas(cloneData);
+                });
+                //
+                // scale change handlers
+                floatingDiv.querySelector('.profile-scale').addEventListener('input', function(e) {
+                    // update slider
+                    floatingDiv.querySelector('.profile-scale-numeric').value = e.target.value;
+    
+                    // redraw changes
+                    const cloneData = structuredClone(canvasData);
+                    let clonedProfile = findClonedProfile(cloneData, clickedProfile.containerId);
+                    updateProfileFromDiv(clonedProfile, floatingDiv);
+                    redrawCanvas(cloneData);
+                });
+                floatingDiv.querySelector('.profile-scale-numeric').addEventListener('input', function(e) {
+                    // update slider
+                    floatingDiv.querySelector('.profile-scale').value = e.target.value;
+    
+                    // redraw changes
+                    const cloneData = structuredClone(canvasData);
+                    let clonedProfile = findClonedProfile(cloneData, clickedProfile.containerId);
+                    updateProfileFromDiv(clonedProfile, floatingDiv);
+                    redrawCanvas(cloneData);
+                });
+                //
+                // x/y change handler
+                floatingDiv.querySelector('.profile-x-numeric').addEventListener('input', function(e) {
+                    const cloneData = structuredClone(canvasData);
+                    let clonedProfile = findClonedProfile(cloneData, clickedProfile.containerId);
+                    updateProfileFromDiv(clonedProfile, floatingDiv);
+                    redrawCanvas(cloneData);
+                });
+                floatingDiv.querySelector('.profile-y-numeric').addEventListener('input', function(e) {
+                    const cloneData = structuredClone(canvasData);
+                    let clonedProfile = findClonedProfile(cloneData, clickedProfile.containerId);
+                    updateProfileFromDiv(clonedProfile, floatingDiv);
+                    redrawCanvas(cloneData);
+                });
+                //
+                ////
+    
+                document.body.insertBefore(floatingDiv,null);
+            }
+        }
     });
     //
     ////
@@ -794,14 +927,15 @@ function generateImage() {
 function collectAccountData(container) {
     const config = {};
 
+    config.containerId = container.id;
     const imagePreviewElem = container.querySelector('.account-image-preview img');
     config.imageData = imagePreviewElem ? imagePreviewElem.src : container.style.backgroundImage.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
     
     config.shape = container.querySelector('.shape-selector').value;
     config.handle = container.querySelector('.profile-handle').value;
-    config.scale = container.querySelector('.profile-scale').value;
-    config.xshift = container.querySelector('.profile-x-numeric').value;
-    config.yshift = container.querySelector('.profile-y-numeric').value;
+    config.scale = parseFloat(container.querySelector('.profile-scale').value);
+    config.xshift = parseFloat(container.querySelector('.profile-x-numeric').value);
+    config.yshift = parseFloat(container.querySelector('.profile-y-numeric').value);
 
     // Recursive part: check for nested account containers and collect their data too
     const nestedAccounts = Array.from(container.querySelectorAll(':scope > .account-container'));
@@ -854,3 +988,5 @@ function saveConfiguration() {
 }
 
 let canvasData = {};
+
+let renderStatus = {};

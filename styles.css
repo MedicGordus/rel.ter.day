@@ -9,7 +9,7 @@ h1 {
 }
 
 .main-container, .config-container, .generate-container {
-    max-width: 800px;
+    max-width:100%;
     margin: 0 auto;
     padding: 20px;
     background-color: #333;
@@ -28,6 +28,7 @@ h1 {
     background-size: 24px;
     background-position: center center;
     border: 20px solid #000;
+    max-width:100%;
 }
 .account-image-preview {
     max-width: 200px;
@@ -57,7 +58,7 @@ h1 {
     cursor: pointer;
 }
 
-.add-account-btn {
+.add-account-btn, .save-popup-btn {
     padding: 8px 15px;
     font-size: 14px;
     border: none;
@@ -69,11 +70,11 @@ h1 {
     margin: 20px 10px;
 }
 
-.add-account-btn:hover {
+.add-account-btn:hover, .save-popup-btn:hover {
     background-color: #45a049; /* A darker shade of green for hover */
 }
 
-.delete-account-btn, .close-popup-btn {
+.delete-account-btn, .revert-popup-btn {
     padding: 8px 15px;
     font-size: 14px;
     border: none;
@@ -85,7 +86,7 @@ h1 {
     margin: 20px 10px;
 }
 
-.delete-account-btn:hover {
+.delete-account-btn:hover, .revert-popup-btn:hover {
     background-color: #da190b; /* A darker shade of red for hover */
 }
 
