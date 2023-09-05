@@ -167,10 +167,8 @@ function loadImagePreviewAndUpdateBackground(img, parentNode)
 
 function restoreNewAccount(accountConfig, parentElement) {
     // "Click" the 'Add Account' button to create a new account entry
-    const addAccountButton = parentElement.querySelector('.add-account-btn');
-    if (addAccountButton) {
-        addAccountButton.click();
-    }
+    const addAccountButton = parentElement.querySelector(':scope > .add-account-btn');
+    addAccountButton.click();
 
     // Get the newly added account container
     const newAccountContainer = addAccountButton.previousSibling;
@@ -594,7 +592,7 @@ function generateImage() {
 
                                 // For a dash-dot pattern (unused)
                                 // ctxReference.setLineDash([10, 5, 1, 5]); // 10 pixels of line, 5 pixels of space, 1 pixel of line, 5 pixels of space
-                            }
+                        }
                         ctxReference.beginPath();
                         ctxReference.moveTo(x, y);
                         ctxReference.lineTo(childX + subAccountConfig.xshift, childY + subAccountConfig.yshift);
